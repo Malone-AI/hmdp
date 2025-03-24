@@ -1,0 +1,13 @@
+server:
+  port: 8081
+spring:
+  profiles:
+    active: dev  # 默认使用开发环境配置
+  jackson:
+    default-property-inclusion: non_null
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+logging:
+  level:
+    com.hmdp: debug
