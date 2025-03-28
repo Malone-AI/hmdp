@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import static com.hmdp.utils.RedisConstants.*;
 
 @SpringBootTest
-public class GetTokensAndWriteFiles {
+public class TokensGeneratorTest {
 
     @Resource
     private IUserService userService;
@@ -32,7 +32,7 @@ public class GetTokensAndWriteFiles {
         List<User> users = userService.lambdaQuery().last("limit 1000").list();
         FileWriter fr = null;
         try {
-            fr = new FileWriter("C:\\百度网盘\\itheima\\Redis\\02-实战篇\\资料\\tokens.txt");//文件位置
+            fr = new FileWriter("D:\\Desktop\\Project\\hm-dianping\\src\\test\\tokens.txt");//文件位置
             for (User user : users) {
                 // 7.保存用户信息到 Redis 中
                 // 7.1。随机生成 token 作为登录令牌
