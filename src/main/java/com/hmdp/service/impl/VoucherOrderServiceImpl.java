@@ -41,6 +41,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private RedissonClient redissonClient;
+
     @Override
     public Result seckillVoucher(Long voucherId) {
         // 1. 查询优惠券信息
@@ -60,8 +63,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }
         Long userId = UserHolder.getUser().getId();
         // 获取锁对象
-        SimpleRedisLock lock = new SimpleRedisLock("order" + userId, stringRedisTemplate);
-        boolean success = lock.tryLock(1200L);
+        RLock lock = redissonClient.getLock("lock:order:" + userId);
+        boolean success = lock.tryLock();
         if (!success) {
             // 获取锁失败
             return Result.fail("用户已经购买过一次！");
