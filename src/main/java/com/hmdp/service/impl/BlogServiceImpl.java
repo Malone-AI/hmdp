@@ -1,8 +1,10 @@
 package com.hmdp.service.impl;
 
 import cn.hutool.core.util.BooleanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.hmdp.dto.Result;
+import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.BlogMapper;
@@ -46,7 +48,10 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         // 查询用户
         records.forEach(blog -> {
             this.queryBlogUser(blog);
-            this.isBlogLiked(blog);
+            UserDTO user = UserHolder.getUser();
+            if (user != null) {
+                this.isBlogLiked(blog);
+            }
         });
         return Result.ok(records);
     }
