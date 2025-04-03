@@ -69,6 +69,8 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
         String shopJson = stringRedisTemplate.opsForValue().get(key);
         if (StrUtil.isNotBlank(shopJson)) {
             Shop shop = JSONUtil.toBean(shopJson, Shop.class);
+            // 刷新ttl
+            stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(shop), RedisConstants.CACHE_SHOP_TTL, TimeUnit.MINUTES);
             return Result.ok(shop);
         }
         Shop shop = getById(id);

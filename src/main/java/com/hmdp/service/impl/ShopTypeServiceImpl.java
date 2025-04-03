@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -34,6 +35,8 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
         List<Object> shopTypeList = stringRedisTemplate.opsForHash().values(key);
         // 2. 判断是否存在
         if (!shopTypeList.isEmpty()) {
+            // 刷新ttl
+            stringRedisTemplate.expire(key,RedisConstants.CACHE_SHOP_TYPE_TTL, TimeUnit.MINUTES);
             // 3. 存在，转为ShopType
             List<ShopType> shopTypes = new ArrayList<>(shopTypeList.size());
             for (Object obj: shopTypeList) {
@@ -47,8 +50,12 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
         }
         // 4. 不存在，查找数据库
         List<ShopType> shopTypes = query().orderByAsc("sort").list();
-        // 5. 还是不存在，返回错误
+        // 5. 还是不存在，缓存空值后返回错误
         if (shopTypes == null) {
+            // 缓存空值
+            stringRedisTemplate.opsForHash().put(key, "", "");
+            // 设置ttl
+            stringRedisTemplate.expire(key,RedisConstants.CACHE_NULL_TTL, TimeUnit.MINUTES);
             return Result.fail("商铺类型不存在");
         }
         // 6. 存在，写入redis
@@ -56,7 +63,10 @@ public class ShopTypeServiceImpl extends ServiceImpl<ShopTypeMapper, ShopType> i
         for (ShopType shopType: shopTypes) {
             map.put(shopType.getId().toString(), JSONUtil.toJsonStr(shopType));
         }
+        // 写入redis
         stringRedisTemplate.opsForHash().putAll(key, map);
+        // 设置ttl
+        stringRedisTemplate.expire(key,RedisConstants.CACHE_SHOP_TYPE_TTL, TimeUnit.MINUTES);
         // 7. 返回
         return Result.ok(shopTypes);
     }
