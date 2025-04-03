@@ -38,7 +38,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
 
     @Resource
     private IUserService userService;
-    @Autowired
+    @Resource
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
@@ -119,6 +119,30 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
                 .map(user -> BeanUtil.copyProperties(user, UserDTO.class))
                 .collect(Collectors.toList());
         return Result.ok(userDTOs);
+    }
+
+    @Override
+    public Result saveBlog(Blog blog) {
+        // 1. 获取登录用户
+        UserDTO user = UserHolder.getUser();
+        blog.setUserId(user.getId());
+        // 2. 保存探店博文
+        boolean isSuccess = save(blog);
+        if (!isSuccess) {
+            return Result.fail("新增笔记失败！");
+        }
+        // 3. 查询笔记作者的所有粉丝
+        List<User> follows = userService.query().eq("follow_user_id", user.getId()).list();
+        // 4. 推送笔记id给所有粉丝
+        for (User follow : follows) {
+            // 4.1 获取粉丝id
+            Long id = follow.getId();
+            // 4.2 推送（即写入redis缓存）
+            String key = RedisConstants.FEED_KEY + id;
+            stringRedisTemplate.opsForZSet().add(key, blog.getId().toString(), System.currentTimeMillis());
+        }
+        // 返回id
+        return Result.ok(blog.getId());
     }
 
     private void queryBlogUser(Blog blog) {
