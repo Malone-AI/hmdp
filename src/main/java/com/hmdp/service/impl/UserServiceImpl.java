@@ -105,6 +105,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return Result.ok(token);
     }
 
+    @Override
+    public Result queryUserById(Long userId) {
+        User user = query().eq("id", userId).one();
+        if (user == null) {
+            return Result.ok();
+        }
+        UserDTO userDTO = BeanUtil.copyProperties(user, UserDTO.class);
+        return Result.ok(userDTO);
+    }
+
     private User createUserWithPhone(String phone) {
         // 1. 创建用户
         User user = new User();
